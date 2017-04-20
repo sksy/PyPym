@@ -56,6 +56,24 @@ def no_by_age_group(curs, i, tbl):
     return curs.fetchone()
 
 
+def num_bill(curs, tbl, typ=''):
+
+    # typ is compose of BI PI UI SI default is blank for all bill.
+    sql = "SELECT COUNT(*) FROM " + tbl + " WHERE no LIKE " + "'" + typ + "%'"
+    curs.execute(sql)
+    return curs.fetchone()
+
+
+def pt_days(curs, tbl, typ=''):
+
+    # patient days calculation by group
+    sql = "SELECT flgi, SUM((to_date(dcg, 'DD/MM/YYYY HH24:MI') - "
+    sql += "to_date(adm, 'DD/MM/YYYY HH24:MI'))) AS PtDays "
+    sql += "FROM " + tbl + " WHERE no LIKE " + "'" + typ + "%' GROUP BY flgi"
+    curs.execute(sql)
+    return curs.fetchall()
+
+
 def main():
 
     con = connect('piyamin', 'postgres', 'postgres')
@@ -89,6 +107,52 @@ def main():
     # TODO Group the address and caddress by province, district, road
     # TODO find the number of first visit group by month.
     # TODO Services used statistics
+
+    # Check type of bill
+
+    # all bill
+    tbl = 'ip_inv'
+    no_bill = num_bill(cur, tbl)
+    bi_bill = num_bill(cur, tbl, 'BI')
+    pi_bill = num_bill(cur, tbl, 'PI')
+    ui_bill = num_bill(cur, tbl, 'UI')
+    si_bill = num_bill(cur, tbl, 'SI')
+    print("\n")
+    print("Total           Bills are %8.0f" % no_bill, "bills")
+    print("Total BI        Bills are %8.0f" % bi_bill, "bills")
+    print("Total PI        Bills are %8.0f" % pi_bill, "bills")
+    print("Total UI        Bills are %8.0f" % ui_bill, "bills")
+    print("Total SI        Bills are %8.0f" % si_bill, "bills")
+    print("AND BI+PI+UI+SI Bills are %8.0f" % (float(bi_bill[0])+\
+                                               float(pi_bill[0])+\
+                                               float(ui_bill[0])+\
+                                               float(si_bill[0])), "bills")
+
+    # Details of BI Bill
+
+    # Patient Days By Group
+    print("\n")
+    no_days = pt_days(cur, tbl)
+    for row in no_days:
+        print("Type of patients =  %s   Patient days =  %8.0f days" %(row[0], row[1]))
+        x = float(row[1])
+
+        if row[0] == "พ.ร.บ.":
+            y = float(pi_bill[0])
+        elif row[0] == "ปกส.":
+            y = float(si_bill[0])
+        elif row[0] == "คู่สัญญา":
+            y = float(pi_bill[0])
+
+        else:
+            print("ALOS = %8.1f days" % (x/y))
+
+            #pt_day_typ = no_days[row][col]
+            #pt_day = no_days[row][col]
+
+    #print(pt_day_typ, pt_day)
+
+    #print("Total Patient Days of ALL are %s , %8.0f days" % (pt_day_typ,pt_day))
 
     con.close()
 
