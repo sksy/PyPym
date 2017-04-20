@@ -1,2 +1,0 @@
-# PyPym
-Pym Statistic Data
