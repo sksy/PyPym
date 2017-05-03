@@ -64,15 +64,25 @@ def num_bill(curs, tbl, typ=''):
     return curs.fetchone()
 
 
-def pt_days(curs, tbl, typ=''):
+def pt_days(curs, tbl, typ):
 
     # patient days calculation by group
-    sql = "SELECT flgi, SUM((to_date(dcg, 'DD/MM/YYYY HH24:MI') - "
-    sql += "to_date(adm, 'DD/MM/YYYY HH24:MI'))) AS PtDays "
-    sql += "FROM " + tbl + " WHERE no LIKE " + "'" + typ + "%' GROUP BY flgi"
-    curs.execute(sql)
-    return curs.fetchall()
+    sql = "SELECT SUM(ptdays) from " + tbl
+    sql += " WHERE typ = " + "'" + typ + "'"
+    sql += " group by typ"
 
+    curs.execute(sql)
+    return curs.fetchone()
+
+
+def pt_no(curs, tbl, typ):
+
+    # patient numbers calculation by group
+    sql = "SELECT COUNT(an) from " + tbl
+    sql += " WHERE typ = " + "'" + typ + "'"
+
+    curs.execute(sql)
+    return curs.fetchone()
 
 def main():
 
@@ -112,47 +122,63 @@ def main():
 
     # all bill
     tbl = 'ip_inv'
-    no_bill = num_bill(cur, tbl)
     bi_bill = num_bill(cur, tbl, 'BI')
     pi_bill = num_bill(cur, tbl, 'PI')
     ui_bill = num_bill(cur, tbl, 'UI')
     si_bill = num_bill(cur, tbl, 'SI')
     print("\n")
-    print("Total           Bills are %8.0f" % no_bill, "bills")
     print("Total BI        Bills are %8.0f" % bi_bill, "bills")
     print("Total PI        Bills are %8.0f" % pi_bill, "bills")
     print("Total UI        Bills are %8.0f" % ui_bill, "bills")
     print("Total SI        Bills are %8.0f" % si_bill, "bills")
-    print("AND BI+PI+UI+SI Bills are %8.0f" % (float(bi_bill[0])+\
-                                               float(pi_bill[0])+\
-                                               float(ui_bill[0])+\
+    print("ALL             Bills are %8.0f" % (float(bi_bill[0])+
+                                               float(pi_bill[0])+
+                                               float(ui_bill[0])+
                                                float(si_bill[0])), "bills")
 
     # Details of BI Bill
 
     # Patient Days By Group
+    tbl = 'ip'
+    bi_days = pt_days(cur, tbl, 'BI')
+    pi_days = pt_days(cur, tbl, 'PI')
+    si_days = pt_days(cur, tbl, 'SI')
+    ui_days = pt_days(cur, tbl, 'UI')
     print("\n")
-    no_days = pt_days(cur, tbl)
-    for row in no_days:
-        print("Type of patients =  %s   Patient days =  %8.0f days" %(row[0], row[1]))
-        x = float(row[1])
+    print("Total BI        Ptdays are %8.0f" % bi_days, "days")
+    print("Total PI        Ptdays are %8.0f" % pi_days, "days")
+    print("Total UI        Ptdays are %8.0f" % ui_days, "days")
+    print("Total SI        Ptdays are %8.0f" % si_days, "days")
+    print("ALL             Ptdays are %8.0f" % (float(bi_days[0]) +
+                                               float(pi_days[0]) +
+                                               float(ui_days[0]) +
+                                               float(si_days[0])), "days")
 
-        if row[0] == "พ.ร.บ.":
-            y = float(pi_bill[0])
-        elif row[0] == "ปกส.":
-            y = float(si_bill[0])
-        elif row[0] == "คู่สัญญา":
-            y = float(pi_bill[0])
+    # Patient Number By Group
+    tbl = 'ip'
+    bi_no = pt_no(cur, tbl, 'BI')
+    pi_no = pt_no(cur, tbl, 'PI')
+    si_no = pt_no(cur, tbl, 'SI')
+    ui_no = pt_no(cur, tbl, 'UI')
+    print("\n")
+    print("Total BI        Numbers are %8.0f" % bi_no, "persons")
+    print("Total PI        Numbers are %8.0f" % pi_no, "persons")
+    print("Total UI        Numbers are %8.0f" % ui_no, "persons")
+    print("Total SI        Numbers are %8.0f" % si_no, "persons")
+    print("ALL             Numbers are %8.0f" % (float(bi_no[0]) +
+                                                float(pi_no[0]) +
+                                                float(ui_no[0]) +
+                                                float(si_no[0])), "persons")
 
-        else:
-            print("ALOS = %8.1f days" % (x/y))
-
-            #pt_day_typ = no_days[row][col]
-            #pt_day = no_days[row][col]
-
-    #print(pt_day_typ, pt_day)
-
-    #print("Total Patient Days of ALL are %s , %8.0f days" % (pt_day_typ,pt_day))
+    bi_alos = bi_days[0]/bi_no[0]
+    pi_alos = pi_days[0]/pi_no[0]
+    si_alos = si_days[0]/si_no[0]
+    ui_alos = ui_days[0]/ui_no[0]
+    print("\n")
+    print("ALOS BI        are %8.0f" % bi_alos, "days")
+    print("ALOS PI        are %8.0f" % pi_alos, "days")
+    print("ALOS UI        are %8.0f" % ui_alos, "days")
+    print("ALOS SI        are %8.0f" % si_alos, "days")
 
     con.close()
 
