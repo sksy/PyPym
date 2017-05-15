@@ -31,8 +31,3 @@ delete from ip
                where i1.typ = 'PI' and i2.typ in ('SI', 'UI'))
    and typ = 'PI';
 
-select * from ip;
-
-
-
-

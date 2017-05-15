@@ -35,3 +35,14 @@ CREATE TABLE ip_inv ( seq varchar(50), no varchar(50) PRIMARY KEY,
                      oths varchar(50), prc varchar(50),
                      dsc varchar(50), net varchar(50)
                     );
+
+-- CHAD Cashier std file details
+create table chad (hn varchar(15), dateserve date, seq text,
+	               clinic varchar(15), itemtype varchar(15),
+	               	itemcode varchar(15), itemsrc varchar(15),
+	               	qty varchar(15), amount varchar(15),
+	               	amount_ext varchar(15), provider varchar(255));
+
+-- cha
+create table  cha (hn varchar(15), dateopd date,
+	               chrgitem,amount, amount_extDATEOPD	CHRGITEM	AMOUNT	AMOUNT_EXT	PERSON_ID	SEQ
