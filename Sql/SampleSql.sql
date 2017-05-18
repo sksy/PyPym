@@ -199,3 +199,233 @@ Pivot (max(DiseaseStandardCode) for LineNumber In ([1], [2], [3],[4],[5],[6],[7]
 )icd on icd.MRMainID = od.MRMainID
 where od.DrugM = @DrugM
 order by od.RegistrationID
+
+-- UC Services Used
+with gp as(
+select
+r.RegistrationDateTime,r.RegistrationID,m.PatientID,ms.DepartmentID,d.DepartmentName,
+case when r.SymptomsMemo is null OR r.SymptomsMemo = '' then '' else SUBSTRING(r.SymptomsMemo,1,charindex('[',r.SymptomsMemo)-1) end as Memo,
+case when app1.RegisterDate is null then 0 else 1 end as statAppointment,appM.CountApp
+from MAIN.dbo.MRMain m
+inner join MAIN.dbo.Registrations r on r.RegistrationID = m.RegistrationID
+inner join MAIN.dbo.MRs ms on ms.MRMainID = m.MRMainID and ms.IsDelete = 0
+inner join MAIN.dbo.Departments d on d.DepartmentID = ms.DepartmentID
+left join
+(
+select
+pa.PatientId,cast(a.RegisterDate as Date) as RegisterDate
+from VW_PatientApps pa
+inner join Appointments a on a.AppId = pa.AppId
+group by pa.PatientId,cast(a.RegisterDate as Date)
+)app1 on app1.PatientId = r.PatientID and cast(app1.RegisterDate as Date) = cast(r.RegistrationDateTime as Date)
+
+left join
+(select pa.DepartmentId,cast(a.Start as Date)as DateApp,COUNT(a.AppId)as CountApp
+from VW_PatientApps pa inner join Appointments a on a.AppId = pa.AppId
+where pa.DepartmentId in(131,155,161,170,171,172,173,175,176,177,178,179,180,184,185,196,197,200,201,202,203,204)
+group by pa.DepartmentId,cast(a.Start as Date)
+)appM on appM.DepartmentId = ms.DepartmentID and appM.DateApp = cast(r.RegistrationDateTime as Date)
+
+where m.IsDelete = 0
+and m.IsOutPatient = 1
+and m.IsExtraRegistration = 0
+and YEAR(m.CreateDateTime)= @YR and MONTH(m.CreateDateTime)=  @MT
+and ms.DepartmentID in(131,155,161,170,171,172,173,175,176,177,178,179,180,184,185,196,197,200,201,202,203,204)
+)
+select
+g.DepartmentID,g.DepartmentName
+----1----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 1 group by CountApp) as SumApp1
+,sum(case when DAY(g.RegistrationDateTime)= 1 then 1 else 0 end) as visit1
+,sum(case when DAY(g.RegistrationDateTime) = 1 and g.statAppointment = 1 then 1 else 0 end) as TrueApp1
+,sum(case when DAY(g.RegistrationDateTime) = 1 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp1
+,sum(case when DAY(g.RegistrationDateTime) = 1 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn1
+----2----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 2 group by CountApp) as SumApp2
+,sum(case when DAY(g.RegistrationDateTime)= 2 then 1 else 0 end) as visit2
+,sum(case when DAY(g.RegistrationDateTime) = 2 and g.statAppointment = 1 then 1 else 0 end) as TrueApp2
+,sum(case when DAY(g.RegistrationDateTime) = 2 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp2
+,sum(case when DAY(g.RegistrationDateTime) = 2 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn2
+----3----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 3 group by CountApp) as SumApp3
+,sum(case when DAY(g.RegistrationDateTime)= 3 then 1 else 0 end) as visit3
+,sum(case when DAY(g.RegistrationDateTime) = 3 and g.statAppointment = 1 then 1 else 0 end) as TrueApp3
+,sum(case when DAY(g.RegistrationDateTime) = 3 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp3
+,sum(case when DAY(g.RegistrationDateTime) = 3 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn3
+----4----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 4 group by CountApp) as SumApp4
+,sum(case when DAY(g.RegistrationDateTime)= 4 then 1 else 0 end) as visit4
+,sum(case when DAY(g.RegistrationDateTime) = 4 and g.statAppointment = 1 then 1 else 0 end) as TrueApp4
+,sum(case when DAY(g.RegistrationDateTime) = 4 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp4
+,sum(case when DAY(g.RegistrationDateTime) = 4 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn4
+----5----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 5 group by CountApp) as SumApp5
+,sum(case when DAY(g.RegistrationDateTime)= 5 then 1 else 0 end) as visit5
+,sum(case when DAY(g.RegistrationDateTime) = 5 and g.statAppointment = 1 then 1 else 0 end) as TrueApp5
+,sum(case when DAY(g.RegistrationDateTime) = 5 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp5
+,sum(case when DAY(g.RegistrationDateTime) = 5 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn5
+------------------------------------------------------------------------------------------------------------------------------------------
+----6----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 6 group by CountApp) as SumApp6
+,sum(case when DAY(g.RegistrationDateTime)= 6 then 1 else 0 end) as visit6
+,sum(case when DAY(g.RegistrationDateTime) = 6 and g.statAppointment = 1 then 1 else 0 end) as TrueApp6
+,sum(case when DAY(g.RegistrationDateTime) = 6 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp6
+,sum(case when DAY(g.RegistrationDateTime) = 6 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn6
+----7----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 7 group by CountApp) as SumApp7
+,sum(case when DAY(g.RegistrationDateTime)= 7 then 1 else 0 end) as visit7
+,sum(case when DAY(g.RegistrationDateTime) = 7 and g.statAppointment = 1 then 1 else 0 end) as TrueApp7
+,sum(case when DAY(g.RegistrationDateTime) = 7 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp7
+,sum(case when DAY(g.RegistrationDateTime) = 7 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn7
+----8----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 8 group by CountApp) as SumApp8
+,sum(case when DAY(g.RegistrationDateTime)= 8 then 1 else 0 end) as visit8
+,sum(case when DAY(g.RegistrationDateTime) = 8 and g.statAppointment = 1 then 1 else 0 end) as TrueApp8
+,sum(case when DAY(g.RegistrationDateTime) = 8 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp8
+,sum(case when DAY(g.RegistrationDateTime) = 8 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn8
+----9----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 9 group by CountApp) as SumApp9
+,sum(case when DAY(g.RegistrationDateTime)= 9 then 1 else 0 end) as visit9
+,sum(case when DAY(g.RegistrationDateTime) = 9 and g.statAppointment = 1 then 1 else 0 end) as TrueApp9
+,sum(case when DAY(g.RegistrationDateTime) = 9 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp9
+,sum(case when DAY(g.RegistrationDateTime) = 9 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn9
+----10----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 10 group by CountApp) as SumApp10
+,sum(case when DAY(g.RegistrationDateTime)= 10 then 1 else 0 end) as visit10
+,sum(case when DAY(g.RegistrationDateTime) = 10 and g.statAppointment = 1 then 1 else 0 end) as TrueApp10
+,sum(case when DAY(g.RegistrationDateTime) = 10 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp10
+,sum(case when DAY(g.RegistrationDateTime) = 10 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn10
+--------------------------------------------------------------------------------------------------------------------------------------
+----11----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 11 group by CountApp) as SumApp11
+,sum(case when DAY(g.RegistrationDateTime)= 11 then 1 else 0 end) as visit11
+,sum(case when DAY(g.RegistrationDateTime) = 11 and g.statAppointment = 1 then 1 else 0 end) as TrueApp11
+,sum(case when DAY(g.RegistrationDateTime) = 11 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp11
+,sum(case when DAY(g.RegistrationDateTime) = 11 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn11
+----12----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 12 group by CountApp) as SumApp12
+,sum(case when DAY(g.RegistrationDateTime)= 12 then 1 else 0 end) as visit12
+,sum(case when DAY(g.RegistrationDateTime) = 12 and g.statAppointment = 1 then 1 else 0 end) as TrueApp12
+,sum(case when DAY(g.RegistrationDateTime) = 12 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp12
+,sum(case when DAY(g.RegistrationDateTime) = 12 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn12
+----13----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 13 group by CountApp) as SumApp13
+,sum(case when DAY(g.RegistrationDateTime)= 13 then 1 else 0 end) as visit13
+,sum(case when DAY(g.RegistrationDateTime) = 13 and g.statAppointment = 1 then 1 else 0 end) as TrueApp13
+,sum(case when DAY(g.RegistrationDateTime) = 13 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp13
+,sum(case when DAY(g.RegistrationDateTime) = 13 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn13
+----14----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 14 group by CountApp) as SumApp14
+,sum(case when DAY(g.RegistrationDateTime)= 14 then 1 else 0 end) as visit14
+,sum(case when DAY(g.RegistrationDateTime) = 14 and g.statAppointment = 1 then 1 else 0 end) as TrueApp14
+,sum(case when DAY(g.RegistrationDateTime) = 14 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp14
+,sum(case when DAY(g.RegistrationDateTime) = 14 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn14
+----15----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 15 group by CountApp) as SumApp15
+,sum(case when DAY(g.RegistrationDateTime)= 15 then 1 else 0 end) as visit15
+,sum(case when DAY(g.RegistrationDateTime) = 15 and g.statAppointment = 1 then 1 else 0 end) as TrueApp15
+,sum(case when DAY(g.RegistrationDateTime) = 15 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp15
+,sum(case when DAY(g.RegistrationDateTime) = 15 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn15
+----------------------------------------------------------------------------------------------------------------------------------------
+----16----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 16 group by CountApp) as SumApp16
+,sum(case when DAY(g.RegistrationDateTime)= 16 then 1 else 0 end) as visit16
+,sum(case when DAY(g.RegistrationDateTime) = 16 and g.statAppointment = 1 then 1 else 0 end) as TrueApp16
+,sum(case when DAY(g.RegistrationDateTime) = 16 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp16
+,sum(case when DAY(g.RegistrationDateTime) = 16 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn16
+----17----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 17 group by CountApp) as SumApp17
+,sum(case when DAY(g.RegistrationDateTime)= 17 then 1 else 0 end) as visit17
+,sum(case when DAY(g.RegistrationDateTime) = 17 and g.statAppointment = 1 then 1 else 0 end) as TrueApp17
+,sum(case when DAY(g.RegistrationDateTime) = 17 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp17
+,sum(case when DAY(g.RegistrationDateTime) = 17 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn17
+----18----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 18 group by CountApp) as SumApp18
+,sum(case when DAY(g.RegistrationDateTime)= 18 then 1 else 0 end) as visit18
+,sum(case when DAY(g.RegistrationDateTime) = 18 and g.statAppointment = 1 then 1 else 0 end) as TrueApp18
+,sum(case when DAY(g.RegistrationDateTime) = 18 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp18
+,sum(case when DAY(g.RegistrationDateTime) = 18 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn18
+----19----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 19 group by CountApp) as SumApp19
+,sum(case when DAY(g.RegistrationDateTime)= 19 then 1 else 0 end) as visit19
+,sum(case when DAY(g.RegistrationDateTime) = 19 and g.statAppointment = 1 then 1 else 0 end) as TrueApp19
+,sum(case when DAY(g.RegistrationDateTime) = 19 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp19
+,sum(case when DAY(g.RegistrationDateTime) = 19 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn19
+----20----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 20 group by CountApp) as SumApp20
+,sum(case when DAY(g.RegistrationDateTime)= 20 then 1 else 0 end) as visit20
+,sum(case when DAY(g.RegistrationDateTime) = 20 and g.statAppointment = 1 then 1 else 0 end) as TrueApp20
+,sum(case when DAY(g.RegistrationDateTime) = 20 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp20
+,sum(case when DAY(g.RegistrationDateTime) = 20 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn20
+----------------------------------------------------------------------------------------------------------------------------------------
+----21----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 21 group by CountApp) as SumApp21
+,sum(case when DAY(g.RegistrationDateTime)= 21 then 1 else 0 end) as visit21
+,sum(case when DAY(g.RegistrationDateTime) = 21 and g.statAppointment = 1 then 1 else 0 end) as TrueApp21
+,sum(case when DAY(g.RegistrationDateTime) = 21 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp21
+,sum(case when DAY(g.RegistrationDateTime) = 21 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn21
+----22----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 22 group by CountApp) as SumApp22
+,sum(case when DAY(g.RegistrationDateTime)= 22 then 1 else 0 end) as visit22
+,sum(case when DAY(g.RegistrationDateTime) = 22 and g.statAppointment = 1 then 1 else 0 end) as TrueApp22
+,sum(case when DAY(g.RegistrationDateTime) = 22 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp22
+,sum(case when DAY(g.RegistrationDateTime) = 22 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn22
+----23----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 23 group by CountApp) as SumApp23
+,sum(case when DAY(g.RegistrationDateTime)= 23 then 1 else 0 end) as visit23
+,sum(case when DAY(g.RegistrationDateTime) = 23 and g.statAppointment = 1 then 1 else 0 end) as TrueApp23
+,sum(case when DAY(g.RegistrationDateTime) = 23 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp23
+,sum(case when DAY(g.RegistrationDateTime) = 23 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn23
+----24----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 24 group by CountApp) as SumApp24
+,sum(case when DAY(g.RegistrationDateTime)= 24 then 1 else 0 end) as visit24
+,sum(case when DAY(g.RegistrationDateTime) = 24 and g.statAppointment = 1 then 1 else 0 end) as TrueApp24
+,sum(case when DAY(g.RegistrationDateTime) = 24 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp24
+,sum(case when DAY(g.RegistrationDateTime) = 24 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn24
+----25----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 25 group by CountApp) as SumApp25
+,sum(case when DAY(g.RegistrationDateTime)= 25 then 1 else 0 end) as visit25
+,sum(case when DAY(g.RegistrationDateTime) = 25 and g.statAppointment = 1 then 1 else 0 end) as TrueApp25
+,sum(case when DAY(g.RegistrationDateTime) = 25 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp25
+,sum(case when DAY(g.RegistrationDateTime) = 25 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn25
+-----------------------------------------------------------------------------------------------------------------------------------------
+----26----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 26 group by CountApp) as SumApp26
+,sum(case when DAY(g.RegistrationDateTime)= 26 then 1 else 0 end) as visit26
+,sum(case when DAY(g.RegistrationDateTime) = 26 and g.statAppointment = 1 then 1 else 0 end) as TrueApp26
+,sum(case when DAY(g.RegistrationDateTime) = 26 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp26
+,sum(case when DAY(g.RegistrationDateTime) = 26 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn26
+----27----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 27 group by CountApp) as SumApp27
+,sum(case when DAY(g.RegistrationDateTime)= 27 then 1 else 0 end) as visit27
+,sum(case when DAY(g.RegistrationDateTime) = 27 and g.statAppointment = 1 then 1 else 0 end) as TrueApp27
+,sum(case when DAY(g.RegistrationDateTime) = 27 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp27
+,sum(case when DAY(g.RegistrationDateTime) = 27 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn27
+----28----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 28 group by CountApp) as SumApp28
+,sum(case when DAY(g.RegistrationDateTime)= 28 then 1 else 0 end) as visit28
+,sum(case when DAY(g.RegistrationDateTime) = 28 and g.statAppointment = 1 then 1 else 0 end) as TrueApp28
+,sum(case when DAY(g.RegistrationDateTime) = 28 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp28
+,sum(case when DAY(g.RegistrationDateTime) = 28 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn28
+----29----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 29 group by CountApp) as SumApp29
+,sum(case when DAY(g.RegistrationDateTime)= 29 then 1 else 0 end) as visit29
+,sum(case when DAY(g.RegistrationDateTime) = 29 and g.statAppointment = 1 then 1 else 0 end) as TrueApp29
+,sum(case when DAY(g.RegistrationDateTime) = 29 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp29
+,sum(case when DAY(g.RegistrationDateTime) = 29 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn29
+----30----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 30 group by CountApp) as SumApp30
+,sum(case when DAY(g.RegistrationDateTime)= 30 then 1 else 0 end) as visit30
+,sum(case when DAY(g.RegistrationDateTime) = 30 and g.statAppointment = 1 then 1 else 0 end) as TrueApp30
+,sum(case when DAY(g.RegistrationDateTime) = 30 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp30
+,sum(case when DAY(g.RegistrationDateTime) = 30 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn30
+------------------------------------------------------------------------------------------------------------------------------------------
+----31----
+,(select CountApp from gp where DepartmentID = g.DepartmentID and DAY(RegistrationDateTime) = 31 group by CountApp) as SumApp31
+,sum(case when DAY(g.RegistrationDateTime)= 31 then 1 else 0 end) as visit31
+,sum(case when DAY(g.RegistrationDateTime) = 31 and g.statAppointment = 1 then 1 else 0 end) as TrueApp31
+,sum(case when DAY(g.RegistrationDateTime) = 31 and g.statAppointment = 0 and g.Memo like '%นัด%' then 1 else 0 end) as FalseApp31
+,sum(case when DAY(g.RegistrationDateTime) = 31 and g.statAppointment = 0 and g.Memo not like '%นัด%' then 1 else 0 end) as WalkIn31
+from gp g
+group by g.DepartmentID,g.DepartmentName
+order by g.DepartmentName
